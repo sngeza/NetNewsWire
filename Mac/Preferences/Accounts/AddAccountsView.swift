@@ -88,10 +88,7 @@ struct AddAccountsView: View {
 				.padding()
 
 			localAccount
-
-			if !AppDefaults.shared.isDeveloperBuild {
-				icloudAccount
-			}
+			icloudAccount
 
 			webAccounts
 			selfhostedAccounts

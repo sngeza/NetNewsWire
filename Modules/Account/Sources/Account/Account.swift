@@ -49,8 +49,10 @@ nonisolated public enum AccountType: Int, Codable, Sendable {
 	case bazQux = 22
 	case theOldReader = 23
 
+	/// Needs credentials only official builds have. iCloud isn’t included: a developer build
+	/// signed with its own team uses that team’s container, `iCloud.<organization ID>.NetNewsWire`.
 	public var isDeveloperRestricted: Bool {
-		return self == .cloudKit || self == .feedbin || self == .feedly || self == .inoreader
+		return self == .feedbin || self == .feedly || self == .inoreader
 	}
 
 	public var displayName: String {
