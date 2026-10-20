@@ -102,14 +102,14 @@
 		D1A7E100000000000000C005 /* Images in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000C004 /* Images */; };
 		D1A7E100000000000000C006 /* Images in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000C004 /* Images */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D1A7E100000000000000C008 /* Images in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000C007 /* Images */; };
-		D1A7E100000000000000E002 /* CloudKitSync in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E001 /* CloudKitSync */; };
-		D1A7E100000000000000E003 /* CloudKitSync in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E001 /* CloudKitSync */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		D1A7E100000000000000E005 /* CloudKitSync in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E004 /* CloudKitSync */; };
-		D1A7E100000000000000E006 /* CloudKitSync in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E004 /* CloudKitSync */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D1A7E100000000000000D002 /* Suggestions in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D001 /* Suggestions */; };
 		D1A7E100000000000000D003 /* Suggestions in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D001 /* Suggestions */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D1A7E100000000000000D005 /* Suggestions in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D004 /* Suggestions */; };
 		D1A7E100000000000000D006 /* Suggestions in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D004 /* Suggestions */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		D1A7E100000000000000E002 /* CloudKitSync in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E001 /* CloudKitSync */; };
+		D1A7E100000000000000E003 /* CloudKitSync in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E001 /* CloudKitSync */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		D1A7E100000000000000E005 /* CloudKitSync in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E004 /* CloudKitSync */; };
+		D1A7E100000000000000E006 /* CloudKitSync in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E004 /* CloudKitSync */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */

@@ -941,6 +941,9 @@
     "No Activity Logged" : {
       "comment" : "Activity log empty state"
     },
+    "No article was found on the page." : {
+      "comment" : "Reader view error"
+    },
     "No current activity." : {
       "comment" : "Current Activity empty state"
     },
@@ -1054,6 +1057,9 @@
     },
     "Reader View" : {
       "comment" : "Reader View"
+    },
+    "Reader view is unavailable." : {
+      "comment" : "Reader view error"
     },
     "Refresh" : {
       "comment" : "Refresh"
@@ -1201,7 +1207,7 @@
       "comment" : "Show notifications for new articles"
     },
     "Show Only Suggested Articles" : {
-      "comment" : "Show Only Suggested Articles"
+      "comment" : "Command"
     },
     "Show Read Articles" : {
       "comment" : "Command"
@@ -1343,6 +1349,15 @@
           }
         }
       }
+    },
+    "The page couldn’t be downloaded (HTTP %d)." : {
+      "comment" : "Reader view error"
+    },
+    "The page isn’t a web page." : {
+      "comment" : "Reader view error"
+    },
+    "The page’s text couldn’t be read." : {
+      "comment" : "Reader view error"
     },
     "The theme “%@” already exists. Overwrite it?" : {
       "comment" : "Overwrite theme"
