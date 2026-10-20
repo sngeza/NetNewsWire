@@ -321,6 +321,10 @@ final class MainWindowController: NSWindowController, NSUserInterfaceValidations
 			return validateToggleReadArticles(item)
 		}
 
+		if item.action == #selector(toggleSuggestedArticlesFilter(_:)) {
+			return validateToggleSuggestedArticles(item)
+		}
+
 		if item.action == #selector(sortArticlesByField(_:)) {
 			return validateSortArticlesByField(item)
 		}
@@ -395,8 +399,9 @@ final class MainWindowController: NSWindowController, NSUserInterfaceValidations
 	}
 
 	@IBAction func openArticleInBrowser(_ sender: Any?) {
-		if let link = currentLink {
+		if let article = oneSelectedArticle, let link = article.preferredLink {
 			Browser.open(link, invertPreference: NSApp.currentEvent?.modifierFlags.contains(.shift) ?? false)
+			SuggestionsManager.shared.articleOpenedInBrowser(article)
 		}
 	}
 
@@ -416,8 +421,9 @@ final class MainWindowController: NSWindowController, NSUserInterfaceValidations
 		if !AppDefaults.shared.openInBrowserInBackground {
 			window?.makeKeyAndOrderFront(self)
 		}
-		if let link = currentLink {
+		if let article = oneSelectedArticle, let link = article.preferredLink {
 			Browser.open(link, inBackground: !AppDefaults.shared.openInBrowserInBackground)
+			SuggestionsManager.shared.articleOpenedInBrowser(article)
 		}
 	}
 
@@ -623,6 +629,10 @@ final class MainWindowController: NSWindowController, NSUserInterfaceValidations
 		timelineContainerViewController?.toggleReadFilter()
 	}
 
+	@IBAction func toggleSuggestedArticlesFilter(_ sender: Any?) {
+		timelineContainerViewController?.toggleSuggestionFilter()
+	}
+
 	@IBAction func sortArticlesByField(_ sender: NSMenuItem) {
 		// The menu item’s identifier is the ArticleSortKey raw value.
 		guard let identifier = sender.identifier, let key = ArticleSortKey(rawValue: identifier.rawValue) else {
@@ -707,6 +717,7 @@ extension MainWindowController: TimelineContainerViewControllerDelegate {
 
 	func timelineSelectionDidChange(_: TimelineContainerViewController, articles: [Article]?, mode: TimelineSourceMode) {
 		activityManager.invalidateReading()
+		SuggestionsManager.shared.articleDidBecomeCurrent(articles?.count == 1 ? articles?.first : nil)
 
 		articleExtractor?.cancel()
 		articleExtractor = nil
@@ -866,6 +877,7 @@ extension NSToolbarItem.Identifier {
 	static let search = NSToolbarItem.Identifier("search")
 	static let markAllAsRead = NSToolbarItem.Identifier("markAllAsRead")
 	static let toggleReadArticlesFilter = NSToolbarItem.Identifier("toggleReadArticlesFilter")
+	static let toggleSuggestedArticlesFilter = NSToolbarItem.Identifier("toggleSuggestedArticlesFilter")
 	static let nextUnread = NSToolbarItem.Identifier("nextUnread")
 	static let markRead = NSToolbarItem.Identifier("markRead")
 	static let markStar = NSToolbarItem.Identifier("markStar")
@@ -902,6 +914,10 @@ extension MainWindowController: NSToolbarDelegate {
 		case .toggleReadArticlesFilter:
 			let title = NSLocalizedString("Read Articles Filter", comment: "Read Articles Filter")
 			return buildToolbarButton(.toggleReadArticlesFilter, title, Assets.Images.filterInactive, "toggleReadArticlesFilter:")
+
+		case .toggleSuggestedArticlesFilter:
+			let title = NSLocalizedString("Suggested Articles Filter", comment: "Toolbar item: show only suggested articles")
+			return buildToolbarButton(.toggleSuggestedArticlesFilter, title, Assets.Images.suggestionFilter, "toggleSuggestedArticlesFilter:")
 
 		case .timelineTrackingSeparator:
 			// Only the standard layout has a vertical divider between the timeline and the article view.
@@ -987,6 +1003,7 @@ extension MainWindowController: NSToolbarDelegate {
 			.sidebarTrackingSeparator,
 			.markAllAsRead,
 			.toggleReadArticlesFilter,
+			.toggleSuggestedArticlesFilter,
 			.timelineTrackingSeparator,
 			.flexibleSpace,
 			.nextUnread,
@@ -1010,6 +1027,7 @@ extension MainWindowController: NSToolbarDelegate {
 			.sidebarTrackingSeparator,
 			.markAllAsRead,
 			.toggleReadArticlesFilter,
+			.toggleSuggestedArticlesFilter,
 			.timelineTrackingSeparator,
 			.markRead,
 			.markStar,
@@ -1105,6 +1123,7 @@ private extension MainWindowController {
 			toolbar.isVisible = isToolbarVisible
 		} else {
 			window.toolbar = makeToolbar()
+			addSuggestedArticlesFilterToSavedToolbarIfNeeded()
 		}
 
 		window.contentView?.layoutSubtreeIfNeeded()
@@ -1212,6 +1231,23 @@ private extension MainWindowController {
 		splitViewController.splitView.dividerStyle = .thin
 		splitViewController.splitView.wantsLayer = true
 		return splitViewController
+	}
+
+	private static let didAddSuggestedArticlesFilterKey = "didAddSuggestedArticlesFilterToToolbar"
+
+	/// A toolbar saved before the suggestions filter existed doesn’t get new default items.
+	/// Add it once, after the read articles filter. If the person removes it later, it stays removed.
+	func addSuggestedArticlesFilterToSavedToolbarIfNeeded() {
+		guard !UserDefaults.standard.bool(forKey: Self.didAddSuggestedArticlesFilterKey), let toolbar = window?.toolbar else {
+			return
+		}
+		UserDefaults.standard.set(true, forKey: Self.didAddSuggestedArticlesFilterKey)
+
+		let identifiers = toolbar.items.map(\.itemIdentifier)
+		guard !identifiers.contains(.toggleSuggestedArticlesFilter), let readFilterIndex = identifiers.firstIndex(of: .toggleReadArticlesFilter) else {
+			return
+		}
+		toolbar.insertItem(withItemIdentifier: .toggleSuggestedArticlesFilter, at: readFilterIndex + 1)
 	}
 
 	func makeToolbar() -> NSToolbar {
@@ -1604,6 +1640,21 @@ private extension MainWindowController {
 		return true
 	}
 
+	func validateToggleSuggestedArticles(_ item: NSValidatedUserInterfaceItem) -> Bool {
+		let isSuggestionFiltered = timelineContainerViewController?.isSuggestionFiltered
+
+		if let menuItem = item as? NSMenuItem {
+			menuItem.title = Self.showOnlySuggestionsCommand
+			menuItem.state = isSuggestionFiltered == true ? .on : .off
+		}
+		if let toolbarItem = item as? NSToolbarItem, let button = toolbarItem.view as? NSButton {
+			toolbarItem.toolTip = isSuggestionFiltered == true ? Self.showAllSuggestionsCommand : Self.showOnlySuggestionsCommand
+			button.contentTintColor = isSuggestionFiltered == true ? .systemOrange : nil
+		}
+
+		return isSuggestionFiltered != nil
+	}
+
 	func validateToggleReadArticles(_ item: NSValidatedUserInterfaceItem) -> Bool {
 		let showCommand = NSLocalizedString("Show Read Articles", comment: "Command")
 		let hideCommand = NSLocalizedString("Hide Read Articles", comment: "Command")
@@ -1811,4 +1862,12 @@ private extension MainWindowController {
 
 		return articleThemeMenu
 	}
+}
+
+// MARK: - Suggestions filter titles
+
+extension MainWindowController {
+	// Also used by the timeline header’s filter button.
+	static let showOnlySuggestionsCommand = NSLocalizedString("Show Only Suggested Articles", comment: "Command")
+	static let showAllSuggestionsCommand = NSLocalizedString("Include Articles That Aren’t Suggested", comment: "Command")
 }

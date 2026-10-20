@@ -102,6 +102,14 @@
 		D1A7E100000000000000C005 /* Images in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000C004 /* Images */; };
 		D1A7E100000000000000C006 /* Images in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000C004 /* Images */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D1A7E100000000000000C008 /* Images in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000C007 /* Images */; };
+		D1A7E100000000000000E002 /* CloudKitSync in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E001 /* CloudKitSync */; };
+		D1A7E100000000000000E003 /* CloudKitSync in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E001 /* CloudKitSync */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		D1A7E100000000000000E005 /* CloudKitSync in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E004 /* CloudKitSync */; };
+		D1A7E100000000000000E006 /* CloudKitSync in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000E004 /* CloudKitSync */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		D1A7E100000000000000D002 /* Suggestions in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D001 /* Suggestions */; };
+		D1A7E100000000000000D003 /* Suggestions in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D001 /* Suggestions */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		D1A7E100000000000000D005 /* Suggestions in Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D004 /* Suggestions */; };
+		D1A7E100000000000000D006 /* Suggestions in Embed Frameworks */ = {isa = PBXBuildFile; productRef = D1A7E100000000000000D004 /* Suggestions */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -218,6 +226,8 @@
 				D1A7E100000000000000A003 /* HTMLMetadata in Embed Frameworks */,
 				D1A7E100000000000000B003 /* ActivityLog in Embed Frameworks */,
 				D1A7E100000000000000C003 /* Images in Embed Frameworks */,
+				D1A7E100000000000000D003 /* Suggestions in Embed Frameworks */,
+				D1A7E100000000000000E003 /* CloudKitSync in Embed Frameworks */,
 				513F327B2593EE6F0003048F /* SyncDatabase in Embed Frameworks */,
 				84EE3F162DB8A0A0009D3A8D /* RSTree in Embed Frameworks */,
 				513F32722593EE6F0003048F /* Articles in Embed Frameworks */,
@@ -255,6 +265,8 @@
 				D1A7E100000000000000A006 /* HTMLMetadata in Embed Frameworks */,
 				D1A7E100000000000000B006 /* ActivityLog in Embed Frameworks */,
 				D1A7E100000000000000C006 /* Images in Embed Frameworks */,
+				D1A7E100000000000000D006 /* Suggestions in Embed Frameworks */,
+				D1A7E100000000000000E006 /* CloudKitSync in Embed Frameworks */,
 				84EE3F132DB8A088009D3A8D /* RSTree in Embed Frameworks */,
 				513277662590FC780064F1E7 /* Secrets in Embed Frameworks */,
 				513277652590FC640064F1E7 /* SyncDatabase in Embed Frameworks */,
@@ -520,6 +532,8 @@
 				D1A7E100000000000000A002 /* HTMLMetadata in Frameworks */,
 				D1A7E100000000000000B002 /* ActivityLog in Frameworks */,
 				D1A7E100000000000000C002 /* Images in Frameworks */,
+				D1A7E100000000000000D002 /* Suggestions in Frameworks */,
+				D1A7E100000000000000E002 /* CloudKitSync in Frameworks */,
 				513F32712593EE6F0003048F /* Articles in Frameworks */,
 				513F32772593EE6F0003048F /* Secrets in Frameworks */,
 				84EE434B2DB8A44C009D3A8D /* RSDatabase in Frameworks */,
@@ -549,6 +563,8 @@
 				D1A7E100000000000000A005 /* HTMLMetadata in Frameworks */,
 				D1A7E100000000000000B005 /* ActivityLog in Frameworks */,
 				D1A7E100000000000000C005 /* Images in Frameworks */,
+				D1A7E100000000000000D005 /* Suggestions in Frameworks */,
+				D1A7E100000000000000E005 /* CloudKitSync in Frameworks */,
 				519CA8E525841DB700EB079A /* CrashReporter in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -774,6 +790,8 @@
 				D1A7E100000000000000A001 /* HTMLMetadata */,
 				D1A7E100000000000000B001 /* ActivityLog */,
 				D1A7E100000000000000C001 /* Images */,
+				D1A7E100000000000000D001 /* Suggestions */,
+				D1A7E100000000000000E001 /* CloudKitSync */,
 				8424B31A2DB73D530053AA11 /* RSParser */,
 				848E84D42DB749670023F3BA /* RSCore */,
 				84EE3F142DB8A0A0009D3A8D /* RSTree */,
@@ -821,6 +839,8 @@
 				D1A7E100000000000000A004 /* HTMLMetadata */,
 				D1A7E100000000000000B004 /* ActivityLog */,
 				D1A7E100000000000000C004 /* Images */,
+				D1A7E100000000000000D004 /* Suggestions */,
+				D1A7E100000000000000E004 /* CloudKitSync */,
 				8424B3172DB73D4C0053AA11 /* RSParser */,
 				848E84CC2DB749440023F3BA /* RSCore */,
 				848E84CF2DB749440023F3BA /* RSCoreResources */,
@@ -1667,6 +1687,22 @@
 		D1A7E100000000000000C007 /* Images */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Images;
+		};
+		D1A7E100000000000000D001 /* Suggestions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Suggestions;
+		};
+		D1A7E100000000000000D004 /* Suggestions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Suggestions;
+		};
+		D1A7E100000000000000E001 /* CloudKitSync */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CloudKitSync;
+		};
+		D1A7E100000000000000E004 /* CloudKitSync */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CloudKitSync;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

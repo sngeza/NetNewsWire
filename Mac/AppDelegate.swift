@@ -53,6 +53,8 @@ let appName = "NetNewsWire"
 
 	@IBOutlet var debugMenuItem: NSMenuItem!
 	@IBOutlet var useColumnLayoutMenuItem: NSMenuItem?
+	@IBOutlet var showSuggestionsMenuItem: NSMenuItem?
+	@IBOutlet var syncSuggestionsMenuItem: NSMenuItem?
 	@IBOutlet var checkForUpdatesMenuItem: NSMenuItem!
 
 	var unreadCount = 0 {
@@ -204,6 +206,8 @@ let appName = "NetNewsWire"
 		}
 
 		updateColumnLayoutMenuItem()
+		updateShowSuggestionsMenuItem()
+		SuggestionsManager.shared.start()
 
 		if mainWindowController == nil {
 			let mainWindowController = createAndShowMainWindow()
@@ -336,6 +340,7 @@ let appName = "NetNewsWire"
 	func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
 		Task { @MainActor in
 			await AccountManager.shared.receiveRemoteNotification(userInfo: userInfo)
+			await SuggestionsManager.shared.receiveRemoteNotification(userInfo: userInfo)
 		}
 	}
 
@@ -503,6 +508,10 @@ let appName = "NetNewsWire"
 
 		if item.action == #selector(toggleWebInspectorEnabled(_:)) {
 			(item as! NSMenuItem).state = AppDefaults.shared.webInspectorEnabled ? .on : .off
+		}
+
+		if item.action == #selector(toggleSyncSuggestions(_:)) {
+			return AppDefaults.shared.showSuggestions
 		}
 
 		return true
@@ -765,6 +774,34 @@ let appName = "NetNewsWire"
 		AppDefaults.shared.useColumnLayout.toggle()
 	}
 
+	@IBAction func toggleShowSuggestions(_ sender: Any?) {
+		AppDefaults.shared.showSuggestions.toggle()
+		updateShowSuggestionsMenuItem()
+	}
+
+	@IBAction func toggleSyncSuggestions(_ sender: Any?) {
+		AppDefaults.shared.syncSuggestionsWithiCloud.toggle()
+		updateShowSuggestionsMenuItem()
+	}
+
+	@IBAction func resetSuggestionHistory(_ sender: Any?) {
+		let alert = NSAlert()
+		alert.alertStyle = .warning
+		alert.messageText = NSLocalizedString("Reset suggestion history?", comment: "Reset suggestions alert title")
+		if AppDefaults.shared.syncSuggestionsWithiCloud {
+			alert.informativeText = NSLocalizedString("NetNewsWire will forget which articles you’ve opened, on this Mac and on your other devices that sync suggestion history with iCloud. It will stop suggesting articles until it learns again. Your articles, read status, and stars aren’t affected.", comment: "Reset suggestions alert message, with iCloud sync")
+		} else {
+			alert.informativeText = NSLocalizedString("NetNewsWire will forget which articles you’ve opened and stop suggesting articles until it learns again. Your articles, read status, and stars aren’t affected.", comment: "Reset suggestions alert message")
+		}
+		alert.addButton(withTitle: NSLocalizedString("Reset", comment: "Reset suggestions button"))
+		alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel"))
+
+		guard alert.runModal() == .alertFirstButtonReturn else {
+			return
+		}
+		SuggestionsManager.shared.reset()
+	}
+
 	@IBAction func checkForUpdates(_ sender: Any?) {
 		softwareUpdater?.checkForUpdates()
 	}
@@ -882,6 +919,11 @@ extension AppDelegate {
 
 	@MainActor func updateColumnLayoutMenuItem() {
 		useColumnLayoutMenuItem?.state = AppDefaults.shared.useColumnLayout ? .on : .off
+	}
+
+	@MainActor func updateShowSuggestionsMenuItem() {
+		showSuggestionsMenuItem?.state = AppDefaults.shared.showSuggestions ? .on : .off
+		syncSuggestionsMenuItem?.state = AppDefaults.shared.syncSuggestionsWithiCloud ? .on : .off
 	}
 
 	func importTheme(url: URL) {

@@ -352,7 +352,8 @@ final class WebViewController: UIViewController {
 	}
 
 	func openInAppBrowser() {
-		guard let url = article?.preferredURL else { return }
+		guard let article, let url = article.preferredURL else { return }
+		SuggestionsManager.shared.articleOpenedInBrowser(article)
 		if AppDefaults.shared.useSystemBrowser {
 			UIApplication.shared.open(url, options: [:])
 		} else {

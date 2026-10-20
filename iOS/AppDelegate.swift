@@ -97,6 +97,7 @@ import Images
 		UserNotificationManager.shared.start()
 
 		ArticleThemesManager.shared.start()
+		SuggestionsManager.shared.start()
 		NetworkMonitor.shared.start()
 
 #if !SKIP_APP_GROUP_ACCESS
@@ -116,6 +117,7 @@ import Images
 		Task { @MainActor in
 			self.resumeIfNecessary()
 			await AccountManager.shared.receiveRemoteNotification(userInfo: userInfo)
+			await SuggestionsManager.shared.receiveRemoteNotification(userInfo: userInfo)
 			self.suspendApplication()
 			completionHandler(.newData)
 		}

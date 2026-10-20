@@ -14,14 +14,17 @@ final class TimelineWindowState: NSObject, NSSecureCoding {
 
 	let readArticlesFilterStateKeys: [[String: String]]
 	let readArticlesFilterStateValues: [Bool]
+	/// Sidebar items showing only suggested articles.
+	let suggestionFilterStateKeys: [[String: String]]
 	let selectedAccountID: String?
 	let selectedArticleID: String?
 	// Nil when the state was saved before sorting became per-window.
 	let sortParameters: ArticleSortParameters?
 
-	init(readArticlesFilterStateKeys: [[String: String]], readArticlesFilterStateValues: [Bool], selectedAccountID: String? = nil, selectedArticleID: String? = nil, sortParameters: ArticleSortParameters? = nil) {
+	init(readArticlesFilterStateKeys: [[String: String]], readArticlesFilterStateValues: [Bool], suggestionFilterStateKeys: [[String: String]] = [], selectedAccountID: String? = nil, selectedArticleID: String? = nil, sortParameters: ArticleSortParameters? = nil) {
 		self.readArticlesFilterStateKeys = readArticlesFilterStateKeys
 		self.readArticlesFilterStateValues = readArticlesFilterStateValues
+		self.suggestionFilterStateKeys = suggestionFilterStateKeys
 		self.selectedAccountID = selectedAccountID
 		self.selectedArticleID = selectedArticleID
 		self.sortParameters = sortParameters
@@ -30,6 +33,7 @@ final class TimelineWindowState: NSObject, NSSecureCoding {
 	private struct Key {
 		static let readArticlesFilterStateKeys = "readArticlesFilterStateKeys"
 		static let readArticlesFilterStateValues = "readArticlesFilterStateValues"
+		static let suggestionFilterStateKeys = "suggestionFilterStateKeys"
 		static let selectedAccountID = "selectedAccountID"
 		static let selectedArticleID = "selectedArticleID"
 		static let sortKey = "sortKey"
@@ -41,6 +45,7 @@ final class TimelineWindowState: NSObject, NSSecureCoding {
 	required init?(coder: NSCoder) {
 		readArticlesFilterStateKeys = coder.decodeObject(of: [NSArray.self, NSDictionary.self, NSString.self], forKey: Key.readArticlesFilterStateKeys) as? [[String: String]] ?? []
 		readArticlesFilterStateValues = coder.decodeObject(of: [NSArray.self, NSNumber.self], forKey: Key.readArticlesFilterStateValues) as? [Bool] ?? []
+		suggestionFilterStateKeys = coder.decodeObject(of: [NSArray.self, NSDictionary.self, NSString.self], forKey: Key.suggestionFilterStateKeys) as? [[String: String]] ?? []
 		selectedAccountID = coder.decodeObject(of: NSString.self, forKey: Key.selectedAccountID) as? String
 		selectedArticleID = coder.decodeObject(of: NSString.self, forKey: Key.selectedArticleID) as? String
 
@@ -61,6 +66,7 @@ final class TimelineWindowState: NSObject, NSSecureCoding {
 	func encode(with coder: NSCoder) {
 		coder.encode(readArticlesFilterStateKeys, forKey: Key.readArticlesFilterStateKeys)
 		coder.encode(readArticlesFilterStateValues, forKey: Key.readArticlesFilterStateValues)
+		coder.encode(suggestionFilterStateKeys, forKey: Key.suggestionFilterStateKeys)
 		coder.encode(selectedAccountID, forKey: Key.selectedAccountID)
 		coder.encode(selectedArticleID, forKey: Key.selectedArticleID)
 		if let sortParameters {

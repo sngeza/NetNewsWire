@@ -64,7 +64,20 @@ extension TimelineViewController {
 		case .title:
 			let cell = dequeueCell(TimelineTextColumnCellView.self, identifier: identifier)
 			cell.textField?.font = textFont
-			cell.textField?.stringValue = article.map { columnTitleText(for: $0) } ?? ""
+			let titleText = article.map { columnTitleText(for: $0) } ?? ""
+			if let article {
+				SuggestionsManager.shared.articleWasDisplayed(article)
+			}
+			let suggestionScore = article.map { SuggestionsManager.shared.displayScore(for: $0) } ?? 0
+			if suggestionScore > 0 {
+				let attributedTitle = NSMutableAttributedString(attributedString: SuggestionIndicator.attributedPrefix(score: suggestionScore, font: textFont))
+				attributedTitle.append(NSAttributedString(string: titleText, attributes: [.font: textFont]))
+				cell.textField?.attributedStringValue = attributedTitle
+				cell.toolTip = SuggestionIndicator.label(for: suggestionScore)
+			} else {
+				cell.textField?.stringValue = titleText
+				cell.toolTip = nil
+			}
 			return cell
 
 		case .feed:

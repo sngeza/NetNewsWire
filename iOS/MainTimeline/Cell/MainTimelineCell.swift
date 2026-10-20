@@ -23,6 +23,7 @@ final class MainTimelineCell: UICollectionViewCell {
 	private let feedNameView = MainTimelineCell.singleLineLabel()
 	private lazy var iconView = IconView()
 	private lazy var indicatorView = IconView()
+	private let suggestionView = UIImageView(image: Assets.Images.suggestionCellIndicator)
 	private let topSeparator = UIView()
 
 	var cellData: MainTimelineCellData! {
@@ -44,6 +45,7 @@ final class MainTimelineCell: UICollectionViewCell {
 	override func prepareForReuse() {
 		super.prepareForReuse()
 		indicatorView.isHidden = true
+		suggestionView.isHidden = true
 	}
 
 	override func preferredLayoutAttributesFitting(_ layoutAttributes: UICollectionViewLayoutAttributes) -> UICollectionViewLayoutAttributes {
@@ -66,6 +68,7 @@ final class MainTimelineCell: UICollectionViewCell {
 		dateView.setFrameIfNotEqual(layout.dateRect)
 		iconView.setFrameIfNotEqual(layout.iconImageRect)
 		indicatorView.setFrameIfNotEqual(cellData.starred ? layout.starRect : layout.unreadIndicatorRect)
+		suggestionView.setFrameIfNotEqual(layout.suggestionIndicatorRect)
 		topSeparator.frame = CGRect(x: layout.separatorRect.minX, y: 0, width: layout.separatorRect.width, height: 1.0 / traitCollection.displayScale)
 	}
 
@@ -127,6 +130,7 @@ final class MainTimelineCell: UICollectionViewCell {
 		// Text goes white only on the accent background. On gray, labels keep their normal colors.
 		updateColors(active: showsAccentSelection)
 		updateIndicatorView(active: showsAccentSelection)
+		updateSuggestionView(active: showsAccentSelection)
 	}
 
 	func setIconImage(_ image: IconImage) {
@@ -158,11 +162,13 @@ private extension MainTimelineCell {
 	func commonInit() {
 		isAccessibilityElement = true
 		topSeparator.backgroundColor = .separator.withAlphaComponent(0.1)
-		for view in [titleView, summaryView, dateView, feedNameView, iconView, indicatorView, topSeparator] {
+		for view in [titleView, summaryView, dateView, feedNameView, iconView, indicatorView, suggestionView, topSeparator] {
 			contentView.addSubview(view)
 			view.isAccessibilityElement = false
 		}
 		indicatorView.isHidden = true
+		suggestionView.isHidden = true
+		suggestionView.contentMode = .scaleAspectFit
 	}
 
 	func updatedLayout(width: CGFloat) -> MainTimelineCellLayout {
@@ -218,6 +224,7 @@ private extension MainTimelineCell {
 		let active = isActiveSelection(configurationState)
 		updateColors(active: active)
 		updateIndicatorView(active: active)
+		updateSuggestionView(active: active)
 		updateAccessibilityLabel()
 		setNeedsLayout()
 	}
@@ -252,9 +259,29 @@ private extension MainTimelineCell {
 		}
 	}
 
+	/// Stronger for higher scores. Scores below the display threshold arrive as 0.
+	func updateSuggestionView(active: Bool) {
+		guard cellData != nil, cellData.suggestionScore > 0 else {
+			suggestionView.isHidden = true
+			return
+		}
+		let threshold = SuggestionsManager.displayThreshold
+		let fraction = min(max((cellData.suggestionScore - threshold) / (1 - threshold), 0), 1)
+		suggestionView.tintColor = active ? .white : .systemOrange
+		suggestionView.alpha = active ? 1 : CGFloat(0.4 + 0.6 * fraction)
+		suggestionView.isHidden = false
+	}
+
 	func updateAccessibilityLabel() {
 		let starredStatus = cellData.starred ? "\(NSLocalizedString("Starred", comment: "Starred")), " : ""
 		let unreadStatus = cellData.read ? "" : "\(NSLocalizedString("Unread", comment: "Unread")), "
-		accessibilityLabel = starredStatus + unreadStatus + "\(cellData.feedName), \(cellData.title), \(cellData.summary), \(cellData.dateString)"
+		let suggestedStatus: String
+		if cellData.suggestionScore > 0 {
+			let format = NSLocalizedString("Suggested for you (%d%%)", comment: "Timeline suggestion indicator: percent likelihood of opening the article")
+			suggestedStatus = String(format: format, Int((cellData.suggestionScore * 100).rounded())) + ", "
+		} else {
+			suggestedStatus = ""
+		}
+		accessibilityLabel = starredStatus + unreadStatus + suggestedStatus + "\(cellData.feedName), \(cellData.title), \(cellData.summary), \(cellData.dateString)"
 	}
 }

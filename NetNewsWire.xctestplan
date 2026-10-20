@@ -40,6 +40,13 @@
     },
     {
       "target" : {
+        "containerPath" : "container:Modules\/Suggestions",
+        "identifier" : "SuggestionsTests",
+        "name" : "SuggestionsTests"
+      }
+    },
+    {
+      "target" : {
         "containerPath" : "container:Modules\/Account",
         "identifier" : "AccountTests",
         "name" : "AccountTests"

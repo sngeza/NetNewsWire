@@ -21,11 +21,12 @@ import RSCore
 	let textRect: NSRect
 	let unreadIndicatorRect: NSRect
 	let starRect: NSRect
+	let suggestionIndicatorRect: NSRect
 	let iconImageRect: NSRect
 	let separatorRect: NSRect
 	let paddingBottom: CGFloat
 
-	init(width: CGFloat, height: CGFloat, feedNameRect: NSRect, dateRect: NSRect, titleRect: NSRect, numberOfLinesForTitle: Int, summaryRect: NSRect, textRect: NSRect, unreadIndicatorRect: NSRect, starRect: NSRect, iconImageRect: NSRect, separatorRect: NSRect, paddingBottom: CGFloat) {
+	init(width: CGFloat, height: CGFloat, feedNameRect: NSRect, dateRect: NSRect, titleRect: NSRect, numberOfLinesForTitle: Int, summaryRect: NSRect, textRect: NSRect, unreadIndicatorRect: NSRect, starRect: NSRect, suggestionIndicatorRect: NSRect, iconImageRect: NSRect, separatorRect: NSRect, paddingBottom: CGFloat) {
 
 		self.width = width
 		self.feedNameRect = feedNameRect
@@ -36,6 +37,7 @@ import RSCore
 		self.textRect = textRect
 		self.unreadIndicatorRect = unreadIndicatorRect
 		self.starRect = starRect
+		self.suggestionIndicatorRect = suggestionIndicatorRect
 		self.iconImageRect = iconImageRect
 		self.separatorRect = separatorRect
 		self.paddingBottom = paddingBottom
@@ -73,11 +75,12 @@ import RSCore
 		let iconImageRect = TimelineCellLayout.rectForIcon(cellData, appearance, showIcon, textBoxRect, width, height)
 		let unreadIndicatorRect = TimelineCellLayout.rectForUnreadIndicator(appearance, textBoxRect)
 		let starRect = TimelineCellLayout.rectForStar(appearance, unreadIndicatorRect)
+		let suggestionIndicatorRect = TimelineCellLayout.rectForSuggestionIndicator(unreadIndicatorRect, starRect)
 		let separatorRect = TimelineCellLayout.rectForSeparator(cellData, appearance, showIcon ? iconImageRect : titleRect, width, height)
 
 		let paddingBottom = appearance.cellPadding.bottom
 
-		self.init(width: width, height: height, feedNameRect: feedNameRect, dateRect: dateRect, titleRect: titleRect, numberOfLinesForTitle: numberOfLinesForTitle, summaryRect: summaryRect, textRect: textRect, unreadIndicatorRect: unreadIndicatorRect, starRect: starRect, iconImageRect: iconImageRect, separatorRect: separatorRect, paddingBottom: paddingBottom)
+		self.init(width: width, height: height, feedNameRect: feedNameRect, dateRect: dateRect, titleRect: titleRect, numberOfLinesForTitle: numberOfLinesForTitle, summaryRect: summaryRect, textRect: textRect, unreadIndicatorRect: unreadIndicatorRect, starRect: starRect, suggestionIndicatorRect: suggestionIndicatorRect, iconImageRect: iconImageRect, separatorRect: separatorRect, paddingBottom: paddingBottom)
 	}
 
 	static func height(for width: CGFloat, cellData: TimelineCellData, appearance: TimelineCellAppearance) -> CGFloat {
@@ -203,6 +206,17 @@ import RSCore
 		r.size.height = appearance.starDimension
 		r.origin.x = floor(unreadIndicatorRect.origin.x - ((appearance.starDimension - appearance.unreadCircleDimension) / 2.0))
 		r.origin.y = unreadIndicatorRect.origin.y - 4.0
+		return r
+	}
+
+	/// Below the unread dot and star, which share a spot, centered on the same column.
+	static func rectForSuggestionIndicator(_ unreadIndicatorRect: NSRect, _ starRect: NSRect) -> NSRect {
+
+		let dimension = SuggestionIndicator.dimension
+		var r = NSRect.zero
+		r.size = NSSize(width: dimension, height: dimension)
+		r.origin.x = floor(unreadIndicatorRect.midX - (dimension / 2.0))
+		r.origin.y = starRect.maxY + 2.0
 		return r
 	}
 

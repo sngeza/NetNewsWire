@@ -7,6 +7,7 @@ let package = Package(
 	products: [
 		.library(
 			name: "CloudKitSync",
+			type: .dynamic,
 			targets: ["CloudKitSync"]
 		)
 	],

@@ -41,7 +41,7 @@ import Account
 		switch sidebarItemID {
 
 		case .smartFeed(let id):
-			if isUnreadSmartFeed(sidebarItemID) {
+			if isUnreadOnlySmartFeed(sidebarItemID) {
 				return true
 			}
 			return smartFeedsHidingReadArticles.contains(id)
@@ -64,22 +64,23 @@ import Account
 	}
 
 	func canToggleHidingReadArticles(for sidebarItemID: SidebarItemIdentifier) -> Bool {
-		// The only item that can't be toggled is the unread smart feed.
-		!isUnreadSmartFeed(sidebarItemID)
+		// Smart feeds of only unread articles can't be toggled.
+		!isUnreadOnlySmartFeed(sidebarItemID)
 	}
 }
 
 private extension HidingReadArticlesState {
 
-	func isUnreadSmartFeed(_ sidebarItemID: SidebarItemIdentifier) -> Bool {
-		sidebarItemID == SmartFeedsController.shared.unreadFeed.sidebarItemID
+	/// All Unread and Suggested contain only unread articles, so they always hide read ones.
+	func isUnreadOnlySmartFeed(_ sidebarItemID: SidebarItemIdentifier) -> Bool {
+		sidebarItemID == SmartFeedsController.shared.unreadFeed.sidebarItemID || sidebarItemID == SmartFeedsController.shared.suggestedFeed.sidebarItemID
 	}
 
 	func saveHidingReadArticles(for sidebarItemID: SidebarItemIdentifier, hiding: Bool) {
 		switch sidebarItemID {
 
 		case .smartFeed(let id):
-			if isUnreadSmartFeed(sidebarItemID) {
+			if isUnreadOnlySmartFeed(sidebarItemID) {
 				return
 			}
 			if hiding {

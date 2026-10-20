@@ -98,6 +98,9 @@ extension TimelineViewController {
 			return
 		}
 		Browser.open(urlString, inBackground: false)
+		if let article = articles.first(where: { $0.preferredLink == urlString }) {
+			SuggestionsManager.shared.articleOpenedInBrowser(article)
+		}
 	}
 
 	@objc func copyURLFromContextualMenu(_ sender: Any?) {

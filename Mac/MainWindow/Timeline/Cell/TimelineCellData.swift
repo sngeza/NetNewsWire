@@ -25,8 +25,9 @@ import Images
 	let showIcon: Bool // Make space even when icon is nil
 	let read: Bool
 	let starred: Bool
+	let suggestionScore: Float // 0 when not suggested
 
-	init(article: Article, showFeedName: TimelineShowFeedName, feedName: String?, byline: String?, iconImage: IconImage?, showIcon: Bool) {
+	init(article: Article, showFeedName: TimelineShowFeedName, feedName: String?, byline: String?, iconImage: IconImage?, showIcon: Bool, suggestionScore: Float = 0) {
 
 		self.title = ArticleStringFormatter.shared.truncatedTitle(article)
 		self.attributedTitle = ArticleStringFormatter.shared.attributedTruncatedTitle(article)
@@ -53,6 +54,7 @@ import Images
 
 		self.read = article.status.read
 		self.starred = article.status.starred
+		self.suggestionScore = suggestionScore
 	}
 
 	/// The article’s summary, or “(No Text)” when it has neither a title nor a summary.
@@ -75,6 +77,7 @@ import Images
 		self.iconImage = nil
 		self.read = true
 		self.starred = false
+		self.suggestionScore = 0
 		self.attributedTitle = NSAttributedString()
 	}
 }

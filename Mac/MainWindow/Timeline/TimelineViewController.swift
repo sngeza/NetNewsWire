@@ -33,6 +33,20 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 	var sharingServicePickerDelegate: NSSharingServicePickerDelegate?
 
 	private var readFilterEnabledTable = [SidebarItemIdentifier: Bool]()
+	private var suggestionFilteredSidebarItemIDs = Set<SidebarItemIdentifier>()
+
+	/// Whether only suggested articles are shown. Nil when the filter doesn’t apply:
+	/// suggestions are off, more than one item is selected, or the Suggested feed is selected.
+	var isSuggestionFiltered: Bool? {
+		guard AppDefaults.shared.showSuggestions,
+			  representedObjects?.count == 1,
+			  let timelineFeed = representedObjects?.first as? SidebarItem,
+			  !(timelineFeed is SuggestedFeed),
+			  let sidebarItemID = timelineFeed.sidebarItemID else {
+			return nil
+		}
+		return suggestionFilteredSidebarItemIDs.contains(sidebarItemID)
+	}
 
 	var isReadFiltered: Bool? {
 		guard representedObjects?.count == 1, let timelineFeed = representedObjects?.first as? SidebarItem else {
@@ -88,17 +102,20 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 	var windowState: TimelineWindowState {
 		let readArticlesFilterStateKeys = readFilterEnabledTable.keys.compactMap { $0.userInfo }
 		let readArticlesFilterStateValues = readFilterEnabledTable.values.compactMap( { $0 })
+		let suggestionFilterStateKeys = suggestionFilteredSidebarItemIDs.compactMap { $0.userInfo }
 
 		if selectedArticles.count == 1 {
 			let path = selectedArticles.first!.pathUserInfo
 			return TimelineWindowState(readArticlesFilterStateKeys: readArticlesFilterStateKeys,
 									   readArticlesFilterStateValues: readArticlesFilterStateValues,
+									   suggestionFilterStateKeys: suggestionFilterStateKeys,
 									   selectedAccountID: path[ArticlePathKey.accountID] as? String,
 									   selectedArticleID: path[ArticlePathKey.articleID] as? String,
 									   sortParameters: sortParameters)
 		} else {
 			return TimelineWindowState(readArticlesFilterStateKeys: readArticlesFilterStateKeys,
 									   readArticlesFilterStateValues: readArticlesFilterStateValues,
+									   suggestionFilterStateKeys: suggestionFilterStateKeys,
 									   selectedAccountID: nil,
 									   selectedArticleID: nil,
 									   sortParameters: sortParameters)
@@ -256,6 +273,8 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 		if !didRegisterForNotifications {
 			NotificationCenter.default.addObserver(self, selector: #selector(statusesDidChange(_:)), name: .StatusesDidChange, object: nil)
 			NotificationCenter.default.addObserver(self, selector: #selector(feedIconDidBecomeAvailable(_:)), name: .feedIconDidBecomeAvailable, object: nil)
+			NotificationCenter.default.addObserver(self, selector: #selector(suggestionScoresDidChange(_:)), name: .suggestionScoresDidChange, object: nil)
+			NotificationCenter.default.addObserver(self, selector: #selector(suggestedFeedDidChange(_:)), name: .suggestedFeedDidChange, object: nil)
 			NotificationCenter.default.addObserver(self, selector: #selector(avatarDidBecomeAvailable(_:)), name: .AvatarDidBecomeAvailable, object: nil)
 			NotificationCenter.default.addObserver(self, selector: #selector(faviconDidBecomeAvailable(_:)), name: .FaviconDidBecomeAvailable, object: nil)
 			NotificationCenter.default.addObserver(self, selector: #selector(accountDidDownloadArticles(_:)), name: .AccountDidDownloadArticles, object: nil)
@@ -330,6 +349,20 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 		fetchAndReplacePreservingSelection()
 	}
 
+	func toggleSuggestionFilter() {
+		guard let filter = isSuggestionFiltered,
+			  let sidebarItemID = (representedObjects?.first as? SidebarItem)?.sidebarItemID else {
+			return
+		}
+		if filter {
+			suggestionFilteredSidebarItemIDs.remove(sidebarItemID)
+		} else {
+			suggestionFilteredSidebarItemIDs.insert(sidebarItemID)
+		}
+		delegate?.timelineInvalidatedRestorationState(self)
+		fetchAndReplacePreservingSelection()
+	}
+
 	// MARK: State Restoration
 
 	private func noteSidebarItemHidesReadArticles(_ sidebarItemID: SidebarItemIdentifier) {
@@ -341,6 +374,8 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 	}
 
 	func restoreState(from state: TimelineWindowState) {
+		suggestionFilteredSidebarItemIDs = Set(state.suggestionFilterStateKeys.compactMap { SidebarItemIdentifier(userInfo: $0) })
+
 		for i in 0..<state.readArticlesFilterStateKeys.count {
 			if let sidebarItemID = SidebarItemIdentifier(userInfo: state.readArticlesFilterStateKeys[i]) {
 				let hidesReadArticles = state.readArticlesFilterStateValues[i]
@@ -414,8 +449,9 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 	// MARK: - Actions
 
 	@objc func openArticleInBrowser(_ sender: Any?) {
-		if let link = oneSelectedArticle?.preferredLink {
+		if let article = oneSelectedArticle, let link = article.preferredLink {
 			Browser.open(link, invertPreference: NSApp.currentEvent?.modifierFlags.contains(.shift) ?? false)
+			SuggestionsManager.shared.articleOpenedInBrowser(article)
 		}
 	}
 
@@ -677,6 +713,26 @@ final class TimelineViewController: NSViewController, UndoableCommandRunner, Unr
 		}
 		reloadVisibleCells(for: articleIDs)
 		updateUnreadCount()
+	}
+
+	@objc func suggestionScoresDidChange(_ note: Notification) {
+		if let articleIDs = note.userInfo?[SuggestionsManager.UserInfoKey.articleIDs] as? Set<String> {
+			reloadVisibleCells(for: articleIDs)
+		} else {
+			reloadVisibleCells(for: IndexSet(integersIn: 0..<articles.count))
+			// The model or the setting changed. Merging adds articles that are now suggested,
+			// or, with suggestions turned off, the ones the filter was hiding.
+			if let sidebarItemID = (representedObjects?.first as? SidebarItem)?.sidebarItemID, suggestionFilteredSidebarItemIDs.contains(sidebarItemID) {
+				queueFetchAndMergeArticles()
+			}
+		}
+	}
+
+	@objc func suggestedFeedDidChange(_ note: Notification) {
+		// Merging keeps articles already shown, so reading one doesn’t make it vanish.
+		if representedObjects?.contains(where: { $0 === SmartFeedsController.shared.suggestedFeed }) ?? false {
+			queueFetchAndMergeArticles()
+		}
 	}
 
 	@objc func feedIconDidBecomeAvailable(_ note: Notification) {
@@ -1011,7 +1067,9 @@ extension TimelineViewController: NSTableViewDelegate {
 	private func configureTimelineCell(_ cell: TimelineTableCellView, article: Article) {
 		cell.objectValue = article
 		let iconImage = article.iconImage()
-		cell.cellData = TimelineCellData(article: article, showFeedName: showFeedNames, feedName: article.feed?.nameForDisplay, byline: article.byline(), iconImage: iconImage, showIcon: showIcons)
+		let suggestionScore = SuggestionsManager.shared.displayScore(for: article)
+		cell.cellData = TimelineCellData(article: article, showFeedName: showFeedNames, feedName: article.feed?.nameForDisplay, byline: article.byline(), iconImage: iconImage, showIcon: showIcons, suggestionScore: suggestionScore)
+		SuggestionsManager.shared.articleWasDisplayed(article)
 	}
 
 	private func iconFor(_ article: Article) -> IconImage? {
@@ -1324,16 +1382,22 @@ private extension TimelineViewController {
 		}
 
 		var fetchedArticles = Set<Article>()
+		var exceptionArticles = Set<Article>()
 		for fetchers in fetchers {
+			let articles: Set<Article>
 			if (fetchers as? SidebarItem)?.readFiltered(readFilterEnabledTable: readFilterEnabledTable) ?? true {
-				let articles = fetchers.fetchUnreadArticles()
-				fetchedArticles.formUnion(articles)
+				articles = fetchers.fetchUnreadArticles()
 			} else {
-				let articles = fetchers.fetchArticles()
+				articles = fetchers.fetchArticles()
+			}
+			// The article kept on screen across a refetch stays, suggested or not.
+			if fetchers is SingleArticleFetcher {
+				exceptionArticles.formUnion(articles)
+			} else {
 				fetchedArticles.formUnion(articles)
 			}
 		}
-		return fetchedArticles
+		return suggestionFilteredArticles(fetchedArticles).union(exceptionArticles)
 	}
 
 	func fetchUnsortedArticlesAsync(for representedObjects: [Any], completion: @escaping ArticleSetBlock) {
@@ -1347,9 +1411,30 @@ private extension TimelineViewController {
 			guard !operation.isCanceled, let strongSelf = self, operation.id == strongSelf.fetchSerialNumber else {
 				return
 			}
-			completion(articles)
+			completion(strongSelf.suggestionFilteredArticles(articles))
 		}
 		fetchRequestQueue.add(fetchOperation)
+	}
+
+	/// When showing only suggested articles, drops the rest.
+	///
+	/// Uses scores already computed, so it can run synchronously. Articles not scored yet
+	/// are left out, scored in the background, and merged in if they turn out to be suggested.
+	func suggestionFilteredArticles(_ articles: Set<Article>) -> Set<Article> {
+		guard isSuggestionFiltered == true else {
+			return articles
+		}
+
+		let (suggestedArticleIDs, unscored) = SuggestionsManager.shared.cachedSuggestions(in: articles)
+		if !unscored.isEmpty {
+			Task { @MainActor [weak self] in
+				let newlySuggested = await SuggestionsManager.shared.suggestedArticleIDs(in: unscored)
+				if !newlySuggested.isEmpty {
+					self?.queueFetchAndMergeArticles()
+				}
+			}
+		}
+		return articles.filter { suggestedArticleIDs.contains($0.articleID) }
 	}
 
 	func selectArticles(_ articleIDs: [String]) {

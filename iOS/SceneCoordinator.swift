@@ -138,6 +138,25 @@ struct SidebarItemNode: Hashable, Sendable {
 		return treeControllerDelegate.isReadFiltered
 	}
 
+	private var suggestionFilteredSidebarItemIDs = AppDefaults.shared.suggestionFilteredSidebarItemIDs {
+		didSet {
+			AppDefaults.shared.suggestionFilteredSidebarItemIDs = suggestionFilteredSidebarItemIDs
+		}
+	}
+
+	/// Whether only suggested articles are shown. Nil when the filter doesn’t apply:
+	/// suggestions are off, searching, or the Suggested feed is selected.
+	var isSuggestionFiltered: Bool? {
+		guard AppDefaults.shared.showSuggestions,
+			  !isSearching,
+			  let timelineFeed,
+			  !(timelineFeed is SuggestedFeed),
+			  let sidebarItemID = timelineFeed.sidebarItemID else {
+			return nil
+		}
+		return suggestionFilteredSidebarItemIDs.contains(sidebarItemID)
+	}
+
 	var isReadArticlesFiltered: Bool {
 		guard let sidebarItemID = timelineFeed?.sidebarItemID else {
 			return false
@@ -270,6 +289,8 @@ struct SidebarItemNode: Hashable, Sendable {
 			} else {
 				AppDefaults.shared.selectedArticle = nil
 			}
+			// Every way of showing or leaving an article ends up here, including popping back on iPhone.
+			SuggestionsManager.shared.articleDidBecomeCurrent(currentArticle)
 		}
 	}
 
@@ -388,6 +409,8 @@ struct SidebarItemNode: Hashable, Sendable {
 		NotificationCenter.default.addObserver(self, selector: #selector(unreadCountDidInitialize(_:)), name: .UnreadCountDidInitialize, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(unreadCountDidChange(_:)), name: .UnreadCountDidChange, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(statusesDidChange(_:)), name: .StatusesDidChange, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(suggestionScoresDidChange(_:)), name: .suggestionScoresDidChange, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(suggestedFeedDidChange(_:)), name: .suggestedFeedDidChange, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(containerChildrenDidChange(_:)), name: .ChildrenDidChange, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(displayNameDidChange(_:)), name: .DisplayNameDidChange, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(accountStateDidChange(_:)), name: .AccountStateDidChange, object: nil)
@@ -566,6 +589,27 @@ struct SidebarItemNode: Hashable, Sendable {
 
 	@objc func statusesDidChange(_ note: Notification) {
 		updateUnreadCount()
+	}
+
+	@objc func suggestionScoresDidChange(_ note: Notification) {
+		// No userInfo means the model or the setting changed.
+		guard note.userInfo == nil else {
+			return
+		}
+		mainTimelineViewController?.updateFilterButtons()
+
+		// Merging adds articles that are now suggested, or, with suggestions turned off,
+		// the ones the filter was hiding.
+		if let sidebarItemID = timelineFeed?.sidebarItemID, suggestionFilteredSidebarItemIDs.contains(sidebarItemID) {
+			fetchAndMergeArticlesAsync()
+		}
+	}
+
+	@objc func suggestedFeedDidChange(_ note: Notification) {
+		// Merging keeps articles already shown, so reading one doesn’t make it vanish.
+		if timelineFeed is SuggestedFeed {
+			fetchAndMergeArticlesAsync()
+		}
 	}
 
 	@objc func containerChildrenDidChange(_ note: Notification) {
@@ -945,6 +989,18 @@ struct SidebarItemNode: Hashable, Sendable {
 			return
 		}
 		hidingReadArticlesState.toggleHidingReadArticles(for: sidebarItemID)
+		refreshTimeline(resetScroll: false)
+	}
+
+	func toggleSuggestionFilter() {
+		guard let isSuggestionFiltered, let sidebarItemID = timelineFeed?.sidebarItemID else {
+			return
+		}
+		if isSuggestionFiltered {
+			suggestionFilteredSidebarItemIDs.remove(sidebarItemID)
+		} else {
+			suggestionFilteredSidebarItemIDs.insert(sidebarItemID)
+		}
 		refreshTimeline(resetScroll: false)
 	}
 
@@ -1673,13 +1729,15 @@ struct SidebarItemNode: Hashable, Sendable {
 			return
 		}
 		UIApplication.shared.open(url, options: [:])
+		SuggestionsManager.shared.articleOpenedInBrowser(article)
 	}
 
 	func showBrowserForCurrentArticle() {
-		guard let url = currentArticle?.preferredURL else {
+		guard let article = currentArticle, let url = article.preferredURL else {
 			return
 		}
 		UIApplication.shared.open(url, options: [:])
+		SuggestionsManager.shared.articleOpenedInBrowser(article)
 	}
 
 	func showInAppBrowser() {
@@ -2553,7 +2611,20 @@ private extension SceneCoordinator {
 			guard !operation.isCanceled, let strongSelf = self, operation.id == strongSelf.fetchSerialNumber else {
 				return
 			}
-			completion(articles)
+			guard strongSelf.isSuggestionFiltered == true else {
+				completion(articles)
+				return
+			}
+
+			Task { @MainActor [weak self] in
+				let suggestedArticleIDs = await SuggestionsManager.shared.suggestedArticleIDs(in: articles)
+				guard let self, operation.id == self.fetchSerialNumber else {
+					return
+				}
+				// The open article stays, suggested or not.
+				let currentArticleID = self.currentArticle?.articleID
+				completion(articles.filter { suggestedArticleIDs.contains($0.articleID) || $0.articleID == currentArticleID })
+			}
 		}
 
 		fetchRequestQueue.add(fetchOperation)

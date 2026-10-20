@@ -69,6 +69,11 @@ final class TimelineContainerViewController: NSViewController {
 		return regularTimelineViewController.isReadFiltered
 	}
 
+	var isSuggestionFiltered: Bool? {
+		guard let currentTimelineViewController = currentTimelineViewController, mode(for: currentTimelineViewController) == .regular else { return nil }
+		return regularTimelineViewController.isSuggestionFiltered
+	}
+
 	var isCleanUpAvailable: Bool {
 		guard let currentTimelineViewController = currentTimelineViewController, mode(for: currentTimelineViewController) == .regular else { return false }
 		return regularTimelineViewController.isCleanUpAvailable
@@ -174,6 +179,10 @@ final class TimelineContainerViewController: NSViewController {
 	func toggleReadFilter() {
 		regularTimelineViewController.toggleReadFilter()
 		updateReadFilterButton()
+	}
+
+	func toggleSuggestionFilter() {
+		regularTimelineViewController.toggleSuggestionFilter()
 	}
 
 	// MARK: State Restoration

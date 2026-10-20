@@ -22,6 +22,8 @@ final class TimelineTableCellView: NSTableCellView {
 
 	private var starView = TimelineTableCellView.imageView(with: Assets.Images.timelineStar, scaling: .scaleNone)
 
+	private var suggestionView = TimelineTableCellView.imageView(with: SuggestionIndicator.image, scaling: .scaleNone)
+
 	private lazy var textFields = {
 		return [self.dateView, self.feedNameView, self.titleView, self.summaryView, self.textView]
 	}()
@@ -46,6 +48,7 @@ final class TimelineTableCellView: NSTableCellView {
 		didSet {
 			unreadIndicatorView.isEmphasized = isEmphasized
 			updateStarView()
+			updateSuggestionView()
 		}
 	}
 
@@ -53,6 +56,7 @@ final class TimelineTableCellView: NSTableCellView {
 		didSet {
 			unreadIndicatorView.isSelected = isSelected
 			updateStarView()
+			updateSuggestionView()
 		}
 	}
 
@@ -107,6 +111,7 @@ final class TimelineTableCellView: NSTableCellView {
 		feedNameView.setFrameIfNotEqual(layoutRects.feedNameRect)
 		iconView.setFrameIfNotEqual(layoutRects.iconImageRect)
 		starView.setFrameIfNotEqual(layoutRects.starRect)
+		suggestionView.setFrameIfNotEqual(layoutRects.suggestionIndicatorRect)
 	}
 }
 
@@ -188,6 +193,7 @@ private extension TimelineTableCellView {
 		addSubviewAtInit(feedNameView, hidden: true)
 		addSubviewAtInit(iconView, hidden: true)
 		addSubviewAtInit(starView, hidden: true)
+		addSubviewAtInit(suggestionView, hidden: true)
 
 		makeTextFieldColorsNormal()
 	}
@@ -261,6 +267,23 @@ private extension TimelineTableCellView {
 		showOrHideView(starView, !cellData.starred)
 	}
 
+	func updateSuggestionView() {
+		let score = cellData?.suggestionScore ?? 0
+		guard score > 0 else {
+			hideView(suggestionView)
+			suggestionView.toolTip = nil
+			suggestionView.setAccessibilityLabel(nil)
+			return
+		}
+
+		let isHighlighted = isSelected && isEmphasized
+		suggestionView.contentTintColor = isHighlighted ? .white : SuggestionIndicator.color
+		suggestionView.alphaValue = isHighlighted ? 1 : SuggestionIndicator.alpha(for: score)
+		suggestionView.toolTip = SuggestionIndicator.label(for: score)
+		suggestionView.setAccessibilityLabel(suggestionView.toolTip)
+		showView(suggestionView)
+	}
+
 	func updateIcon() {
 		guard let iconImage = cellData.iconImage, cellData.showIcon else {
 			makeIconEmpty()
@@ -310,6 +333,7 @@ private extension TimelineTableCellView {
 		updateFeedNameView()
 		updateUnreadIndicator()
 		updateStarView()
+		updateSuggestionView()
 		updateIcon()
 	}
 }

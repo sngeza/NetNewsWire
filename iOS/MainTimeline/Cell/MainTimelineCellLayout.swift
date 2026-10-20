@@ -14,6 +14,7 @@ import Images
 	var height: CGFloat { get }
 	var unreadIndicatorRect: CGRect { get }
 	var starRect: CGRect { get }
+	var suggestionIndicatorRect: CGRect { get }
 	var iconImageRect: CGRect { get }
 	var titleRect: CGRect { get }
 	var summaryRect: CGRect { get }
@@ -38,6 +39,16 @@ extension MainTimelineCellLayout {
 		r.size.height = MainTimelineDefaultCellLayout.starDimension
 		r.origin.x = floor(point.x - ((MainTimelineDefaultCellLayout.starDimension - MainTimelineDefaultCellLayout.unreadCircleDimension) / 2.0))
 		r.origin.y = point.y + 3
+		return r
+	}
+
+	/// Below the unread dot and star, which share a spot, centered on the same column.
+	static func rectForSuggestionIndicator(_ unreadIndicatorRect: CGRect, _ starRect: CGRect) -> CGRect {
+		let dimension = MainTimelineDefaultCellLayout.suggestionIndicatorDimension
+		var r = CGRect.zero
+		r.size = CGSize(width: dimension, height: dimension)
+		r.origin.x = floor(unreadIndicatorRect.midX - (dimension / 2.0))
+		r.origin.y = starRect.maxY + 2
 		return r
 	}
 
@@ -105,6 +116,8 @@ struct MainTimelineDefaultCellLayout: MainTimelineCellLayout {
 
 	static let starDimension = CGFloat(16)
 
+	static let suggestionIndicatorDimension = CGFloat(13)
+
 	static let iconMarginRight = CGFloat(8)
 	static let iconCornerRadius = CGFloat(4)
 
@@ -122,6 +135,7 @@ struct MainTimelineDefaultCellLayout: MainTimelineCellLayout {
 	let height: CGFloat
 	let unreadIndicatorRect: CGRect
 	let starRect: CGRect
+	let suggestionIndicatorRect: CGRect
 	let iconImageRect: CGRect
 	let titleRect: CGRect
 	let summaryRect: CGRect
@@ -137,6 +151,7 @@ struct MainTimelineDefaultCellLayout: MainTimelineCellLayout {
 
 		self.unreadIndicatorRect = Self.rectForUnreadIndicator(currentPoint)
 		self.starRect = Self.rectForStar(currentPoint)
+		self.suggestionIndicatorRect = Self.rectForSuggestionIndicator(self.unreadIndicatorRect, self.starRect)
 
 		currentPoint.x += Self.unreadCircleDimension + Self.unreadCircleMarginRight
 
@@ -191,6 +206,7 @@ struct MainTimelineAccessibilityCellLayout: MainTimelineCellLayout {
 	let height: CGFloat
 	let unreadIndicatorRect: CGRect
 	let starRect: CGRect
+	let suggestionIndicatorRect: CGRect
 	let iconImageRect: CGRect
 	let titleRect: CGRect
 	let summaryRect: CGRect
@@ -206,6 +222,7 @@ struct MainTimelineAccessibilityCellLayout: MainTimelineCellLayout {
 
 		self.unreadIndicatorRect = Self.rectForUnreadIndicator(currentPoint)
 		self.starRect = Self.rectForStar(currentPoint)
+		self.suggestionIndicatorRect = Self.rectForSuggestionIndicator(self.unreadIndicatorRect, self.starRect)
 
 		currentPoint.x += MainTimelineDefaultCellLayout.unreadCircleDimension + MainTimelineDefaultCellLayout.unreadCircleMarginRight
 

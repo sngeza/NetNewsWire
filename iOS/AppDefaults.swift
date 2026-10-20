@@ -75,6 +75,7 @@ final class AppDefaults: Sendable {
 		static let smartFeedsHidingReadArticles = "smartFeedsHidingReadArticles"
 		static let feedsHidingReadArticles = "feedsHidingReadArticles"
 		static let foldersShowingReadArticles = "foldersShowingReadArticles"
+		static let suggestionFilteredSidebarItems = "suggestionFilteredSidebarItems"
 		static let selectedSidebarItem = "selectedSidebarItem"
 		static let selectedArticle = "selectedArticle"
 		static let didMigrateLegacyStateRestorationInfo = "didMigrateLegacyStateRestorationInfo"
@@ -349,6 +350,17 @@ final class AppDefaults: Sendable {
 		set {
 			let array = Array(newValue)
 			UserDefaults.standard.set(array, forKey: Key.smartFeedsHidingReadArticles)
+		}
+	}
+
+	/// Sidebar items showing only suggested articles.
+	var suggestionFilteredSidebarItemIDs: Set<SidebarItemIdentifier> {
+		get {
+			let userInfos = UserDefaults.standard.array(forKey: Key.suggestionFilteredSidebarItems) as? [[String: String]] ?? []
+			return Set(userInfos.compactMap { SidebarItemIdentifier(userInfo: $0) })
+		}
+		set {
+			UserDefaults.standard.set(newValue.map(\.userInfo), forKey: Key.suggestionFilteredSidebarItems)
 		}
 	}
 

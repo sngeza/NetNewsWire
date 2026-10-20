@@ -50,6 +50,13 @@ final class SettingsViewController: UITableViewController {
 		case timelineLayout = 4
 	}
 
+	/// Added in code after the storyboard’s Timeline rows.
+	private enum SuggestionsRow: Int, CaseIterable {
+		case showSuggestions = 0
+		case syncWithiCloud = 1
+		case resetHistory = 2
+	}
+
 	private enum ArticlesRow: Int, CaseIterable {
 		case theme = 0
 		case openLinksInNetNewsWire = 1
@@ -80,6 +87,18 @@ final class SettingsViewController: UITableViewController {
 
 	var scrollToArticlesSection = false
 	weak var presentingParentController: UIViewController?
+
+	private lazy var showSuggestionsSwitch: UISwitch = {
+		let suggestionsSwitch = UISwitch()
+		suggestionsSwitch.addTarget(self, action: #selector(switchShowSuggestions(_:)), for: .valueChanged)
+		return suggestionsSwitch
+	}()
+
+	private lazy var syncSuggestionsSwitch: UISwitch = {
+		let syncSwitch = UISwitch()
+		syncSwitch.addTarget(self, action: #selector(switchSyncSuggestions(_:)), for: .valueChanged)
+		return syncSwitch
+	}()
 
 	private lazy var colorPalettePopUpButton = Self.makePopUpButton()
 	private lazy var unreadCountDisplayPopUpButton = Self.makePopUpButton()
@@ -188,6 +207,8 @@ final class SettingsViewController: UITableViewController {
 				return defaultNumberOfRows - 1
 			}
 			return defaultNumberOfRows
+		case .timeline:
+			return storyboardTimelineRowCount + SuggestionsRow.allCases.count
 		case .articles:
 			// The Full Screen Articles row is iPhone-only.
 			return traitCollection.userInterfaceIdiom == .phone ? ArticlesRow.allCases.count : ArticlesRow.allCases.count - 1
@@ -220,6 +241,8 @@ final class SettingsViewController: UITableViewController {
 				acctCell.comboNameLabel?.text = account.nameForDisplay
 				cell = acctCell
 			}
+		case .timeline where indexPath.row >= storyboardTimelineRowCount:
+			cell = suggestionsCell(for: SuggestionsRow(rawValue: indexPath.row - storyboardTimelineRowCount))
 		default:
 			cell = super.tableView(tableView, cellForRowAt: indexPath)
 
@@ -265,6 +288,11 @@ final class SettingsViewController: UITableViewController {
 				tableView.selectRow(at: nil, animated: true, scrollPosition: .none)
 			default:
 				break
+			}
+		case .timeline where indexPath.row >= storyboardTimelineRowCount:
+			tableView.selectRow(at: nil, animated: true, scrollPosition: .none)
+			if SuggestionsRow(rawValue: indexPath.row - storyboardTimelineRowCount) == .resetHistory {
+				confirmResetSuggestionHistory(sourceView: tableView.cellForRow(at: indexPath))
 			}
 		case .timeline:
 			switch TimelineRow(rawValue: indexPath.row) {
@@ -354,6 +382,68 @@ final class SettingsViewController: UITableViewController {
 
 	override func tableView(_ tableView: UITableView, indentationLevelForRowAt indexPath: IndexPath) -> Int {
 		return super.tableView(tableView, indentationLevelForRowAt: IndexPath(row: 0, section: Section.accounts.rawValue))
+	}
+
+	// MARK: Suggestions
+
+	private var storyboardTimelineRowCount: Int {
+		super.tableView(tableView, numberOfRowsInSection: Section.timeline.rawValue)
+	}
+
+	private func suggestionsCell(for row: SuggestionsRow?) -> UITableViewCell {
+		let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
+		var content = cell.defaultContentConfiguration()
+
+		switch row {
+		case .showSuggestions:
+			content.text = NSLocalizedString("Suggest Articles", comment: "Settings: suggest articles based on reading history")
+			showSuggestionsSwitch.isOn = AppDefaults.shared.showSuggestions
+			cell.accessoryView = showSuggestionsSwitch
+			cell.selectionStyle = .none
+		case .syncWithiCloud:
+			content.text = NSLocalizedString("Sync Suggestion History with iCloud", comment: "Settings: sync suggestion history with iCloud")
+			syncSuggestionsSwitch.isOn = AppDefaults.shared.syncSuggestionsWithiCloud
+			syncSuggestionsSwitch.isEnabled = AppDefaults.shared.showSuggestions
+			cell.accessoryView = syncSuggestionsSwitch
+			cell.selectionStyle = .none
+		case .resetHistory:
+			content.text = NSLocalizedString("Reset Suggestion History", comment: "Settings: reset suggestion history")
+			content.textProperties.color = .systemRed
+		case nil:
+			break
+		}
+
+		cell.contentConfiguration = content
+		return cell
+	}
+
+	@objc func switchShowSuggestions(_ sender: UISwitch) {
+		AppDefaults.shared.showSuggestions = sender.isOn
+		syncSuggestionsSwitch.isEnabled = sender.isOn
+	}
+
+	@objc func switchSyncSuggestions(_ sender: UISwitch) {
+		AppDefaults.shared.syncSuggestionsWithiCloud = sender.isOn
+	}
+
+	private func confirmResetSuggestionHistory(sourceView: UIView?) {
+		let title = NSLocalizedString("Reset suggestion history?", comment: "Reset suggestions alert title")
+		let message: String
+		if AppDefaults.shared.syncSuggestionsWithiCloud {
+			message = NSLocalizedString("NetNewsWire will forget which articles you’ve opened, on this device and on your other devices that sync suggestion history with iCloud. It will stop suggesting articles until it learns again. Your articles, read status, and stars aren’t affected.", comment: "Reset suggestions alert message, with iCloud sync, iOS")
+		} else {
+			message = NSLocalizedString("NetNewsWire will forget which articles you’ve opened and stop suggesting articles until it learns again. Your articles, read status, and stars aren’t affected.", comment: "Reset suggestions alert message")
+		}
+		let alert = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
+		alert.addAction(UIAlertAction(title: NSLocalizedString("Reset", comment: "Reset suggestions button"), style: .destructive) { _ in
+			SuggestionsManager.shared.reset()
+		})
+		alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: "Cancel"), style: .cancel))
+		if let popover = alert.popoverPresentationController, let sourceView {
+			popover.sourceView = sourceView
+			popover.sourceRect = sourceView.bounds
+		}
+		present(alert, animated: true)
 	}
 
 	// MARK: Actions

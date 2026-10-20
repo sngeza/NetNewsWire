@@ -23,6 +23,7 @@ final class MainTimelineViewController: UIViewController, UndoableCommandRunner 
 	private var iconSize = IconSize.medium
 	private lazy var feedTapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(showFeedInspector(_:)))
 	private lazy var filterButton = UIBarButtonItem(image: Assets.Images.filter, style: .plain, target: self, action: #selector(toggleFilter(_:)))
+	private lazy var suggestionFilterButton = UIBarButtonItem(image: Assets.Images.suggestionFilter, style: .plain, target: self, action: #selector(toggleSuggestionFilter(_:)))
 	private lazy var nextUnreadButton = UIBarButtonItem(image: Assets.Images.nextUnread, style: .plain, target: self, action: #selector(nextUnread(_:)))
 	private let refreshProgressView = RefreshProgressView(frame: .zero)
 	private lazy var refreshBarItem = UIBarButtonItem(customView: refreshProgressView)
@@ -487,6 +488,11 @@ final class MainTimelineViewController: UIViewController, UndoableCommandRunner 
 		coordinator?.toggleReadArticlesFilter()
 	}
 
+	@objc func toggleSuggestionFilter(_ sender: Any?) {
+		assert(coordinator != nil)
+		coordinator?.toggleSuggestionFilter()
+	}
+
 	@IBAction func markAllAsRead(_ sender: Any?) {
 		guard let coordinator else {
 			assertionFailure("Expected coordinator")
@@ -688,6 +694,7 @@ private extension MainTimelineViewController {
 	func addNotificationObservers() {
 		NotificationCenter.default.addObserver(self, selector: #selector(unreadCountDidChange(_:)), name: .UnreadCountDidChange, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(statusesDidChange(_:)), name: .StatusesDidChange, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(suggestionScoresDidChange(_:)), name: .suggestionScoresDidChange, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(feedIconDidBecomeAvailable(_:)), name: .feedIconDidBecomeAvailable, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(avatarDidBecomeAvailable(_:)), name: .AvatarDidBecomeAvailable, object: nil)
 		NotificationCenter.default.addObserver(self, selector: #selector(faviconDidBecomeAvailable(_:)), name: .FaviconDidBecomeAvailable, object: nil)
@@ -917,7 +924,9 @@ private extension MainTimelineViewController {
 		let iconImage = iconImageFor(article)
 		let showFeedNames = coordinator?.showFeedNames ?? ShowFeedName.none
 		let showIcon = showIcons && iconImage != nil
-		let cellData = MainTimelineCellData(article: article, showFeedName: showFeedNames, feedName: article.feed?.nameForDisplay, byline: article.byline(), iconImage: iconImage, showIcon: showIcon, numberOfLines: numberOfTextLines, iconSize: iconSize)
+		let suggestionScore = SuggestionsManager.shared.displayScore(for: article)
+		SuggestionsManager.shared.articleWasDisplayed(article)
+		let cellData = MainTimelineCellData(article: article, showFeedName: showFeedNames, feedName: article.feed?.nameForDisplay, byline: article.byline(), iconImage: iconImage, showIcon: showIcon, numberOfLines: numberOfTextLines, iconSize: iconSize, suggestionScore: suggestionScore)
 		return cellData
 	}
 
@@ -956,16 +965,7 @@ private extension MainTimelineViewController {
 	}
 
 	func resetUI(resetScroll: Bool) {
-		let shouldShowFilterButton = coordinator?.shouldShowFilterButton() ?? false
-		navigationItem.rightBarButtonItem = shouldShowFilterButton ? filterButton : nil
-
-		if isReadArticlesFiltered {
-			filterButton.tintColor = Assets.Colors.primaryAccent
-			filterButton.accLabelText = NSLocalizedString("Selected - Filter Read Articles", comment: "Selected - Filter Read Articles")
-		} else {
-			filterButton.tintColor = .label
-			filterButton.accLabelText = NSLocalizedString("Filter Read Articles", comment: "Filter Read Articles")
-		}
+		updateFilterButtons()
 
 		collectionView?.selectItem(at: nil, animated: false, scrollPosition: .top)
 
@@ -1032,6 +1032,19 @@ private extension MainTimelineViewController {
 	@objc dynamic func unreadCountDidChange(_ notification: Notification) {
 		Self.logger.debug("MainTimelineViewController: unreadCountDidChange")
 		queueUpdateUI()
+	}
+
+	@objc func suggestionScoresDidChange(_ note: Notification) {
+		guard let articleIDs = note.userInfo?[SuggestionsManager.UserInfoKey.articleIDs] as? Set<String> else {
+			// The model or the setting changed.
+			queueReloadAvailableCells()
+			return
+		}
+		guard isViewLoaded, let collectionView, let dataSource else {
+			return
+		}
+		let visibleArticles = collectionView.indexPathsForVisibleItems.compactMap { dataSource.itemIdentifier(for: $0) }
+		reloadCells(visibleArticles.filter { articleIDs.contains($0.articleID) })
 	}
 
 	@objc func statusesDidChange(_ note: Notification) {
@@ -1475,5 +1488,40 @@ extension MainTimelineViewController {
 			self?.shareDialogForTableCell(indexPath: indexPath, url: url, title: article.title)
 		}
 		return action
+	}
+}
+
+// MARK: - Filter Buttons
+
+extension MainTimelineViewController {
+
+	/// The read articles filter and, to its left, the suggestions filter.
+	func updateFilterButtons() {
+		var items = [UIBarButtonItem]()
+
+		if coordinator?.shouldShowFilterButton() ?? false {
+			items.append(filterButton)
+		}
+		if isReadArticlesFiltered {
+			filterButton.tintColor = Assets.Colors.primaryAccent
+			filterButton.accLabelText = NSLocalizedString("Selected - Filter Read Articles", comment: "Selected - Filter Read Articles")
+		} else {
+			filterButton.tintColor = .label
+			filterButton.accLabelText = NSLocalizedString("Filter Read Articles", comment: "Filter Read Articles")
+		}
+
+		if let isSuggestionFiltered = coordinator?.isSuggestionFiltered {
+			items.append(suggestionFilterButton)
+			if isSuggestionFiltered {
+				suggestionFilterButton.tintColor = .systemOrange
+				suggestionFilterButton.accLabelText = NSLocalizedString("Selected - Show Only Suggested Articles", comment: "Selected - Show Only Suggested Articles")
+			} else {
+				suggestionFilterButton.tintColor = .label
+				suggestionFilterButton.accLabelText = NSLocalizedString("Show Only Suggested Articles", comment: "Show Only Suggested Articles")
+			}
+		}
+
+		// The first item is the rightmost.
+		navigationItem.rightBarButtonItems = items
 	}
 }

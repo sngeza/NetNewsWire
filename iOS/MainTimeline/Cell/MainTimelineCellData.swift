@@ -29,8 +29,9 @@ import Images
 	let starred: Bool
 	let numberOfLines: Int
 	let iconSize: IconSize
+	let suggestionScore: Float // 0 when not suggested
 
-	init(article: Article, showFeedName: ShowFeedName, feedName: String?, byline: String?, iconImage: IconImage?, showIcon: Bool, numberOfLines: Int, iconSize: IconSize) {
+	init(article: Article, showFeedName: ShowFeedName, feedName: String?, byline: String?, iconImage: IconImage?, showIcon: Bool, numberOfLines: Int, iconSize: IconSize, suggestionScore: Float = 0) {
 
 		self.accountID = article.accountID
 		self.articleID = article.articleID
@@ -67,7 +68,7 @@ import Images
 		self.starred = article.status.starred
 		self.numberOfLines = numberOfLines
 		self.iconSize = iconSize
-
+		self.suggestionScore = suggestionScore
 	}
 
 	init() { // Empty
@@ -86,6 +87,7 @@ import Images
 		self.starred = false
 		self.numberOfLines = 0
 		self.iconSize = .medium
+		self.suggestionScore = 0
 	}
 
 }

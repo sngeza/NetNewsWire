@@ -1855,6 +1855,54 @@
         }
       }
     },
+    "sgC-mn-1tm.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Sync Suggestion History with iCloud\"; ObjectID = \"sgC-mn-1tm\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sync Suggestion History with iCloud"
+          }
+        }
+      }
+    },
+    "sgF-mn-1tm.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Show Only Suggested Articles\"; ObjectID = \"sgF-mn-1tm\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Only Suggested Articles"
+          }
+        }
+      }
+    },
+    "sgR-mn-1tm.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Reset Suggestion History…\"; ObjectID = \"sgR-mn-1tm\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reset Suggestion History…"
+          }
+        }
+      }
+    },
+    "sgS-mn-1tm.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Show Suggestions\"; ObjectID = \"sgS-mn-1tm\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Suggestions"
+          }
+        }
+      }
+    },
     "sMf-da-001.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Date\"; ObjectID = \"sMf-da-001\";",
       "extractionState" : "extracted_with_value",

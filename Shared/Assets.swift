@@ -76,6 +76,7 @@ struct Assets {
 		static var microblog: RSImage { RSImage(named: "MicroblogIcon")! }
 		static let filterActive = RSImage(symbol: "line.horizontal.3.decrease.circle.fill")!
 		static let filterInactive = RSImage(symbol: "line.horizontal.3.decrease.circle")!
+		static let suggestionFilter = RSImage(symbol: "sparkles") ?? RSImage()
 		static let openInBrowser = RSImage(symbol: "safari")!
 		static let preferencesToolbarAccounts = RSImage(symbol: "at")!
 		static let preferencesToolbarGeneral = RSImage(symbol: "gearshape")!
@@ -94,6 +95,7 @@ struct Assets {
 		static let mainFolder = IconImage(folder, isSymbol: true, isBackgroundSuppressed: true, preferredColor: Assets.Colors.primaryAccent)
 		static let todayFeed = IconImage(RSImage(symbol: "sun.max.fill")!, isSymbol: true, isBackgroundSuppressed: true, preferredColor: NSColor.orange)
 		static let unreadFeed = IconImage(RSImage(symbol: "largecircle.fill.circle")!, isSymbol: true, isBackgroundSuppressed: true, preferredColor: Assets.Colors.primaryAccent)
+		static let suggestedFeed = IconImage(RSImage(symbol: "sparkles") ?? RSImage(), isSymbol: true, isBackgroundSuppressed: true, preferredColor: NSColor.systemOrange)
 
 #else // iOS
 		static var accountLocalPadImage: RSImage { RSImage(named: "accountLocalPad")! }
@@ -120,9 +122,12 @@ struct Assets {
 		static let trash = RSImage(symbol: "trash")!
 
 		static let searchFeed = IconImage(RSImage(symbol: "magnifyingglass")!, isSymbol: true)
+		static let suggestionFilter = RSImage(symbol: "sparkles") ?? RSImage()
+		static let suggestionCellIndicator = RSImage(symbol: "sparkle") ?? RSImage()
 		static let mainFolder = IconImage(folder, isSymbol: true, isBackgroundSuppressed: true, preferredColor: Assets.Colors.secondaryAccent)
 		static let todayFeed = IconImage(RSImage(symbol: "sun.max.fill")!, isSymbol: true, isBackgroundSuppressed: true, preferredColor: UIColor.systemOrange)
 		static let unreadFeed = IconImage(RSImage(symbol: "largecircle.fill.circle")!, isSymbol: true, isBackgroundSuppressed: true, preferredColor: Assets.Colors.secondaryAccent)
+		static let suggestedFeed = IconImage(RSImage(symbol: "sparkles") ?? RSImage(), isSymbol: true, isBackgroundSuppressed: true, preferredColor: UIColor.systemOrange)
 		static var timelineStar: RSImage {
 			let image = RSImage(symbol: "star.fill")!
 			return image.withTintColor(Assets.Colors.star, renderingMode: .alwaysOriginal)

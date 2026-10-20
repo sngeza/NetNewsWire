@@ -17,6 +17,8 @@
                 <outlet property="checkForUpdatesMenuItem" destination="1nF-7O-aKU" id="JmT-jc-DJ8"/>
                 <outlet property="debugMenuItem" destination="UqE-mp-gtV" id="OnR-lr-Zlt"/>
                 <outlet property="useColumnLayoutMenuItem" destination="ucL-ay-0ut" id="ucL-ou-tl1"/>
+                <outlet property="showSuggestionsMenuItem" destination="sgS-mn-1tm" id="sgS-ou-tl1"/>
+                <outlet property="syncSuggestionsMenuItem" destination="sgC-mn-1tm" id="sgC-ou-tl1"/>
             </connections>
         </customObject>
         <menu title="Main Menu" systemMenu="main" id="AYu-sK-qS6">
@@ -420,6 +422,12 @@
                                     <action selector="toggleReadArticlesFilter:" target="-1" id="YhV-0F-jrM"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Show Only Suggested Articles" id="sgF-mn-1tm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleSuggestedArticlesFilter:" target="-1" id="sgF-ac-flt"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Hide Read Feeds" keyEquivalent="F" id="E9K-zV-nLv">
                                 <connections>
                                     <action selector="toggleReadFeedsFilter:" target="-1" id="5pI-YT-xai"/>
@@ -436,6 +444,24 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleColumnLayout:" target="Voe-Tx-rLC" id="ucL-ac-t0n"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Show Suggestions" id="sgS-mn-1tm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleShowSuggestions:" target="Voe-Tx-rLC" id="sgS-ac-t0g"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Sync Suggestion History with iCloud" id="sgC-mn-1tm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleSyncSuggestions:" target="Voe-Tx-rLC" id="sgC-ac-syn"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Reset Suggestion History…" id="sgR-mn-1tm">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="resetSuggestionHistory:" target="Voe-Tx-rLC" id="sgR-ac-rst"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="jKG-b2-ZWf"/>
